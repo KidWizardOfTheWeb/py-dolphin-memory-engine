@@ -18,9 +18,9 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install cibuildwheel
-        run: pipx install cibuildwheel==2.21.3
+        run: pipx install cibuildwheel==3.2.1
       - id: set-matrix
         run: |
           MATRIX=$(
@@ -28,9 +28,9 @@ jobs:
               cibuildwheel --print-build-identifiers --platform linux \
               | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' \
               && cibuildwheel --print-build-identifiers --platform macos --archs x86_64 \
-              | jq -nRc '{"only": inputs, "os": "macos-13"}' \
+              | jq -nRc '{"only": inputs, "os": "macos-15-intel"}' \
               && cibuildwheel --print-build-identifiers --platform macos --archs arm64 \
-              | jq -nRc '{"only": inputs, "os": "macos-14"}' \
+              | jq -nRc '{"only": inputs, "os": "macos-latest"}' \
               && cibuildwheel --print-build-identifiers --platform windows \
               | jq -nRc '{"only": inputs, "os": "windows-latest"}'
             } | jq -sc
@@ -40,13 +40,13 @@ jobs:
       CIBW_ARCHS_LINUX: x86_64
       CIBW_ARCHS_MACOS: arm64 x86_64
       CIBW_ARCHS_WINDOWS: AMD64
-      CIBW_SKIP: pp* *musllinux*
+      CIBW_SKIP: pp* *musllinux* cp*t*
 
   build-sdist:
     name: sdist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: 'recursive'
@@ -55,7 +55,7 @@ jobs:
         run: pipx run build --sdist
 
       - name: Store the packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: python-package-source
           path: dist
@@ -68,12 +68,12 @@ jobs:
         include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: 'recursive'
   
-      - uses: pypa/cibuildwheel@v3.0.0
+      - uses: pypa/cibuildwheel@v3.3.1
         with:
           only: ${{ matrix.only }}
           output-dir: dist
@@ -85,7 +85,7 @@ jobs:
         uses: codecov/codecov-action@v5
   
       - name: Store the packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: python-package-${{ matrix.only }}
           path: dist
@@ -98,7 +98,7 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: python-package-*
           merge-multiple: true
